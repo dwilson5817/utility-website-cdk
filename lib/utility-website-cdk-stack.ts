@@ -8,7 +8,7 @@ export class UtilityWebsiteCdkStack extends cdk.Stack {
     super(scope, id, props);
 
     const hostedZone = new route53.HostedZone(this, 'HostedZone', {
-      zoneName: 'tools.dylanw.net',
+      zoneName: 'tools.dylanw.dev',
     });
 
     new route53.CaaRecord(this, 'AcmCaaRecord', {
