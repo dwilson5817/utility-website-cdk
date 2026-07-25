@@ -22,6 +22,13 @@ export class UtilityWebsiteCdkStack extends cdk.Stack {
       ],
     });
 
+    // Route 53 does not support ALIAS to external hostnames, so we use A/AAAA
+    // records pointing to the GitLab Pages server (utility-website.pages.dylanw.dev).
+    new route53.ARecord(this, 'FrontendARecord', {
+      zone: hostedZone,
+      target: route53.RecordTarget.fromIpAddresses('51.38.73.143'),
+    });
+
     new cdk.CfnOutput(this, 'HostedZoneNameServers', {
       description: 'NS records to add to dylanw.net to delegate dmarc.dylanw.net to Route 53',
       value: cdk.Fn.join(', ', hostedZone.hostedZoneNameServers!),
