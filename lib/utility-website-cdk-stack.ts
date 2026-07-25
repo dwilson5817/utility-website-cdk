@@ -1,16 +1,23 @@
 import * as cdk from 'aws-cdk-lib/core';
 import { Construct } from 'constructs';
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
+import * as s3 from 'aws-cdk-lib/aws-s3';
 
 export class UtilityWebsiteCdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    // The code that defines your stack goes here
+    const artifactsBucket = new s3.Bucket(this, 'ArtifactsBucket', {
+      versioned: true,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+      lifecycleRules: [{
+        noncurrentVersionExpiration: cdk.Duration.days(1),
+        noncurrentVersionsToRetain: 5,
+      }],
+    });
 
-    // example resource
-    // const queue = new sqs.Queue(this, 'UtilityWebsiteCdkQueue', {
-    //   visibilityTimeout: cdk.Duration.seconds(300)
-    // });
+    new cdk.CfnOutput(this, 'ArtifactsBucketName', {
+      value: artifactsBucket.bucketName,
+    });
   }
 }
