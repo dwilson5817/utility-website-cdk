@@ -15,6 +15,10 @@ const BASE_DOMAIN = 'tools.dylanw.dev';
 const API_SUBDOMAIN = 'api';
 const API_DOMAIN_NAME = `${API_SUBDOMAIN}.${BASE_DOMAIN}`;
 
+// Origins allowed to call the API: the deployed frontend, plus the Vite dev
+// server so a local frontend can be pointed at the deployed API.
+const ALLOWED_ORIGINS = [`https://${BASE_DOMAIN}`, 'http://localhost:5173'];
+
 export class UtilityWebsiteCdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -100,7 +104,7 @@ export class UtilityWebsiteCdkStack extends cdk.Stack {
       // https://<api domain>/interrail/manifest
       defaultDomainMapping: { domainName: apiDomainName },
       corsPreflight: {
-        allowOrigins: [`https://${BASE_DOMAIN}`],
+        allowOrigins: ALLOWED_ORIGINS,
         allowMethods: [apigwv2.CorsHttpMethod.GET, apigwv2.CorsHttpMethod.OPTIONS],
         allowHeaders: ['Content-Type'],
         maxAge: cdk.Duration.days(1),
@@ -109,9 +113,14 @@ export class UtilityWebsiteCdkStack extends cdk.Stack {
 
     // Each handler owns a subpath. Mangum strips the /interrail prefix, so the
     // app itself serves /manifest, /stations and /departures.
+    //
+    // Methods are listed explicitly rather than using ANY: ANY also matches
+    // OPTIONS, which sends preflights to the Lambda instead of letting API
+    // Gateway answer them from the CORS config above. Add methods here as the
+    // handler grows, but never OPTIONS.
     api.addRoutes({
       path: '/interrail/{proxy+}',
-      methods: [apigwv2.HttpMethod.ANY],
+      methods: [apigwv2.HttpMethod.GET],
       integration: new apigwv2Integrations.HttpLambdaIntegration(
         'InterrailIntegration',
         interrailFunction,
